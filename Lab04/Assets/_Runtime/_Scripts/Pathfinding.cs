@@ -70,7 +70,7 @@ public class Pathfinding : MonoBehaviour
         List<GridGraphNode> openList = new List<GridGraphNode>();
         openList.Add(start);
 
-        OrderedDictionary closedODict = new OrderedDictionary();
+        OrderedDictionary closedODict = new OrderedDictionary(); // use hash set?
 
         while (openList.Count > 0)
         {
@@ -194,6 +194,8 @@ public class Pathfinding : MonoBehaviour
         {
             for (int c = 0; c < node.transform.childCount; ++c)
             {
+                node._nodeGizmoColor = Color.black;
+            
                 if (node.transform.GetChild(c).name == "DEBUG_POINT")
                 {
                     Destroy(node.transform.GetChild(c).gameObject);

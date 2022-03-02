@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 
 public class Pathfinding : MonoBehaviour
 {
@@ -111,13 +112,18 @@ public class Pathfinding : MonoBehaviour
                 // TODO
 
                 // if neighbor is in closed list then skip
-                // ...
+                if (closedODict.Contains(n)) continue;
 
                 // find gNeighbor (g_next)
-                // ...
+                var g_next = gnDict[current];
 
                 // if needed: update tables, calculate fn, and update open_list using FakePQListInsert() function
-                // ...
+                // fn
+                if (!gnDict.ContainsKey(n) || g_next < gnDict[n])
+                {
+                    FakePQListInsert(openList, fnDict, n);
+                    pathDict.Add(n, current);
+                }
             }
         }
 
@@ -130,9 +136,14 @@ public class Pathfinding : MonoBehaviour
             // TODO
             // create the path by traversing the previous nodes in the pathDict
             // starting at the goal and finishing at the start
+            var current = (GridGraphNode) closedODict[goal];
             path = new List<GridGraphNode>();
 
-            // ...
+            while (current != start)
+            {
+                path = path.Append(current).ToList();
+                current = pathDict[current];
+            }
 
             // reverse the path since we started adding nodes from the goal 
             path.Reverse();

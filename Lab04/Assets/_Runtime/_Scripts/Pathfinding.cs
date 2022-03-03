@@ -7,77 +7,82 @@ using System.Linq;
 
 public class Pathfinding : MonoBehaviour
 {
-    public bool debug;
-    [SerializeField] private GridGraph graph;
+    public bool _debug;
+    [SerializeField] private GridGraph _graph;
 
     //public delegate float Heuristic(Transform start, Transform end);
 
-    public GridGraphNode startNode;
-    public GridGraphNode goalNode;
-    public GameObject openPointPrefab;
-    public GameObject closedPointPrefab;
-    public GameObject pathPointPrefab;
+    public GridGraphNode _startNode;
+    public GridGraphNode _goalNode;
+    public GameObject _openPointPrefab;
+    public GameObject _closedPointPrefab;
+    public GameObject _pathPointPrefab;
+    private Camera _camera;
+
+    private void Start()
+    {
+        _camera = Camera.main;
+    }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Mouse0))
         {
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Node")))
+            if (_camera is { } && Physics.Raycast(_camera.ScreenPointToRay(Input.mousePosition), out var hit, Mathf.Infinity, LayerMask.GetMask("Node")))
             {
-                if (startNode != null && goalNode != null)
+                if (_startNode != null && _goalNode != null)
                 {
-                    startNode = null;
-                    goalNode = null;
+                    _startNode = null;
+                    _goalNode = null;
                     ClearPoints();
                 }
 
-                if (startNode == null)
+                if (_startNode == null)
                 {
-                    startNode = hit.collider.gameObject.GetComponent<GridGraphNode>();
+                    _startNode = hit.collider.gameObject.GetComponent<GridGraphNode>();
                 }
-                else if (goalNode == null)
+                else if (_goalNode == null)
                 {
-                    goalNode = hit.collider.gameObject.GetComponent<GridGraphNode>();
+                    _goalNode = hit.collider.gameObject.GetComponent<GridGraphNode>();
 
                     // TODO: use an admissible heuristic and pass it to the FindPath function
-                    List<GridGraphNode> path = FindPath(startNode, goalNode);
+                    var path = FindPath(_startNode, _goalNode);
                 }
             }
         }
     }
 
-    public List<GridGraphNode> FindPath(GridGraphNode start, GridGraphNode goal, bool isAdmissible = true)
+    private List<GridGraphNode> FindPath(GridGraphNode start, GridGraphNode goal, bool isAdmissible = true)
     {
-        if (graph == null) return new List<GridGraphNode>();
+        if (_graph == null) return new List<GridGraphNode>();
 
         // if no heuristic is provided then set heuristic = 0
         // if (heuristic == null) heuristic = (Transform s, Transform e) => 0;
         
 
         List<GridGraphNode> path = null;
-        bool solutionFound = false;
+        var solutionFound = false;
 
         // dictionary to keep track of g(n) values (movement costs)
-        Dictionary<GridGraphNode, float> gnDict = new Dictionary<GridGraphNode, float>();
-        gnDict.Add(start, default);
+        var gnDict = new Dictionary<GridGraphNode, float> {{start, default}};
 
         // dictionary to keep track of f(n) values (movement cost + heuristic)
-        Dictionary<GridGraphNode, float> fnDict = new Dictionary<GridGraphNode, float>();
-        fnDict.Add(start, Heuristic(start.transform, goal.transform) + gnDict[start]);
+        var fnDict = new Dictionary<GridGraphNode, float>
+        {
+            {start, Heuristic(start.transform, goal.transform) + gnDict[start]}
+        };
 
         // dictionary to keep track of our path (came_from)
-        Dictionary<GridGraphNode, GridGraphNode> pathDict = new Dictionary<GridGraphNode, GridGraphNode>();
-        pathDict.Add(start, null);
+        var pathDict = new Dictionary<GridGraphNode, GridGraphNode> {{start, null}};
 
-        List<GridGraphNode> openList = new List<GridGraphNode>();
-        openList.Add(start);
+        var openList = new List<GridGraphNode> {start};
 
-        OrderedDictionary closedODict = new OrderedDictionary(); // use hash set?
+        var closedODict = new OrderedDictionary(); // use hash set?
 
         while (openList.Count > 0)
         {
             // mimic priority queue and remove from the back of the open list (lowest fn value)
-            GridGraphNode current = openList[openList.Count - 1];
+            var current = openList[openList.Count - 1];
             openList.RemoveAt(openList.Count - 1);
 
             closedODict[current] = true;
@@ -88,7 +93,8 @@ public class Pathfinding : MonoBehaviour
                 solutionFound = true;
                 break;
             }
-            else if (closedODict.Contains(goal))
+
+            if (closedODict.Contains(goal))
             {
                 // early exit strategy if heuristic is not admissible (try to avoid this if possible)
                 float gGoal = gnDict[goal];
@@ -106,25 +112,25 @@ public class Pathfinding : MonoBehaviour
                 if (pathIsTheShortest) break;
             }
 
-            List<GridGraphNode> neighbors = graph.GetNeighbors(current);
-            foreach (GridGraphNode n in neighbors)
+            var neighbors = _graph.GetNeighbors(current);
+            foreach (var neighbor in neighbors)
             {
                 float movement_cost = 1;
                 // TODO
 
                 // if neighbor is in closed list then skip
-                if (closedODict.Contains(n)) continue;
+                if (closedODict.Contains(neighbor)) continue;
 
                 // find gNeighbor (g_next)
-                var g_next = gnDict[current] + movement_cost;
+                var gNeighbor = gnDict[current] + movement_cost;
 
                 // if needed: update tables, calculate fn, and update open_list using FakePQListInsert() function
-                if (!gnDict.ContainsKey(n) || g_next < gnDict[n])
+                if (!gnDict.ContainsKey(neighbor) || gNeighbor < gnDict[neighbor])
                 {
-                    gnDict[n] = g_next;
-                    fnDict[n] = Heuristic(n.transform, goal.transform) + gnDict[n];
-                    FakePQListInsert(openList, fnDict, n);
-                    pathDict[n] = current;
+                    gnDict[neighbor] = gNeighbor;
+                    fnDict[neighbor] = Heuristic(neighbor.transform, goal.transform) + gnDict[neighbor];
+                    FakePQListInsert(openList, fnDict, neighbor);
+                    pathDict[neighbor] = current;
                 }
             }
         }
@@ -152,7 +158,7 @@ public class Pathfinding : MonoBehaviour
             path.Reverse();
         }
 
-        if (debug)
+        if (_debug)
         {
             ClearPoints();
 
@@ -161,7 +167,7 @@ public class Pathfinding : MonoBehaviour
             {
                 openListPoints.Add(node.transform);
             }
-            SpawnPoints(openListPoints, openPointPrefab, Color.magenta);
+            SpawnPoints(openListPoints, _openPointPrefab, Color.magenta);
 
             List<Transform> closedListPoints = new List<Transform>();
             foreach (DictionaryEntry entry in closedODict)
@@ -170,7 +176,7 @@ public class Pathfinding : MonoBehaviour
                 if (solutionFound && !path.Contains(node))
                     closedListPoints.Add(node.transform);
             }
-            SpawnPoints(closedListPoints, closedPointPrefab, Color.red);
+            SpawnPoints(closedListPoints, _closedPointPrefab, Color.red);
 
             if (solutionFound)
             {
@@ -179,7 +185,7 @@ public class Pathfinding : MonoBehaviour
                 {
                     pathPoints.Add(node.transform);
                 }
-                SpawnPoints(pathPoints, pathPointPrefab, Color.green);
+                SpawnPoints(pathPoints, _pathPointPrefab, Color.green);
             }
         }
 
@@ -188,15 +194,15 @@ public class Pathfinding : MonoBehaviour
 
     private void SpawnPoints(List<Transform> points, GameObject prefab, Color color)
     {
-        for (int i = 0; i < points.Count; ++i)
+        foreach (var t in points)
         {
 #if UNITY_EDITOR
             // Scene view visuals
-            points[i].GetComponent<GridGraphNode>()._nodeGizmoColor = color;
+            t.GetComponent<GridGraphNode>()._nodeGizmoColor = color;
 #endif
 
             // Game view visuals
-            GameObject obj = Instantiate(prefab, points[i].position, Quaternion.identity, points[i]);
+            GameObject obj = Instantiate(prefab, t.position, Quaternion.identity, t);
             obj.name = "DEBUG_POINT";
             obj.transform.localPosition += Vector3.up * 0.5f;
         }
@@ -204,9 +210,9 @@ public class Pathfinding : MonoBehaviour
 
     private void ClearPoints()
     {
-        foreach (GridGraphNode node in graph.nodes)
+        foreach (var node in _graph.nodes)
         {
-            for (int c = 0; c < node.transform.childCount; ++c)
+            for (var c = 0; c < node.transform.childCount; ++c)
             {
                 node._nodeGizmoColor = Color.black;
             
@@ -225,26 +231,29 @@ public class Pathfinding : MonoBehaviour
     /// <param name="pqList"></param>
     /// <param name="fnDict"></param>
     /// <param name="node"></param>
-    private void FakePQListInsert(List<GridGraphNode> pqList, Dictionary<GridGraphNode, float> fnDict, GridGraphNode node)
+    private static void FakePQListInsert(List<GridGraphNode> pqList, Dictionary<GridGraphNode, float> fnDict, GridGraphNode node)
     {
         if (pqList.Count == 0)
             pqList.Add(node);
         else
         {
-            for (int i = pqList.Count - 1; i >= 0; --i)
+            for (var i = pqList.Count - 1; i >= 0; --i)
             {
                 if (fnDict[pqList[i]] > fnDict[node])
                 {
                     pqList.Insert(i + 1, node);
                     break;
                 }
-                else if (i == 0)
+
+                if (i == 0)
+                {
                     pqList.Insert(0, node);
+                }
             }
         }
     }
 
-    private float Heuristic(Transform node, Transform goal)
+    private static float Heuristic(Transform node, Transform goal)
     {
         var nextPosition = node.position;
         var goalPosition = goal.position;

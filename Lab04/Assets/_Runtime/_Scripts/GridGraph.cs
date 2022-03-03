@@ -1,6 +1,7 @@
 using UnityEngine;
 
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Very quick basic graph implementation that was created to be used only for COMP 476 Lab on pathfinding.
@@ -35,15 +36,16 @@ public class GridGraph : MonoBehaviour
 
         GridGraphNode[,] nodeGrid = new GridGraphNode[generationGridRows, generationGridColumns];
 
-        float width = (generationGridColumns > 0 ? generationGridColumns - 1 : 0) * generationGridCellSize;
-        float height = (generationGridRows > 0 ? generationGridRows - 1 : 0) * generationGridCellSize;
-        Vector3 genPosition = new Vector3(transform.position.x - (width / 2), transform.position.y, transform.position.z - (height / 2));
+        var width = (generationGridColumns > 0 ? generationGridColumns - 1 : 0) * generationGridCellSize;
+        var height = (generationGridRows > 0 ? generationGridRows - 1 : 0) * generationGridCellSize;
+        var position = transform.position;
+        var genPosition = new Vector3(position.x - (width / 2), position.y, position.z - (height / 2));
 
         // first pass : generate nodes
-        for (int r = 0; r < generationGridRows; ++r)
+        for (var r = 0; r < generationGridRows; ++r)
         {
-            float startingX = genPosition.x;
-            for (int c = 0; c < generationGridColumns; ++c)
+            var startingX = genPosition.x;
+            for (var c = 0; c < generationGridColumns; ++c)
             {
                 if (checkCollisions)
                 {
@@ -55,17 +57,14 @@ public class GridGraph : MonoBehaviour
                 }
 
                 GameObject obj;
-                if (nodePrefab == null)
-                    obj = new GameObject("Node", typeof(GridGraphNode));
-                else
-                    obj = Instantiate(nodePrefab);
+                obj = nodePrefab == null ? new GameObject("Node", typeof(GridGraphNode)) : Instantiate(nodePrefab);
 
                 obj.name = $"Node ({nodes.Count})";
                 obj.tag = "Node";
                 obj.transform.parent = transform;
                 obj.transform.position = genPosition;
 
-                GridGraphNode addedNode = obj.GetComponent<GridGraphNode>();                
+                var addedNode = obj.GetComponent<GridGraphNode>();                
                 nodes.Add(addedNode);
                 nodeGrid[r, c] = addedNode;
 
@@ -75,28 +74,28 @@ public class GridGraph : MonoBehaviour
         }
 
         // second pass : create adjacency lists (edges)
-        int[,] operations = new int[,] { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
-        for (int r = 0; r < generationGridRows; ++r)
+        var operations = new[,] { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
+        for (var r = 0; r < generationGridRows; ++r)
         {
-            for (int c = 0; c < generationGridColumns; ++c)
+            for (var c = 0; c < generationGridColumns; ++c)
             {
                 if (nodeGrid[r, c] == null) continue;
 
-                for (int i = 0; i < operations.GetLength(0); ++i)
+                for (var i = 0; i < operations.GetLength(0); ++i)
                 {
-                    int[] neighborId = new int[2] { r + operations[i, 0], c + operations[i, 1] };
+                    var neighborId = new[] { r + operations[i, 0], c + operations[i, 1] };
 
                     // check to see if operation brings us out of bounds
                     if (neighborId[0] < 0 || neighborId[0] >= nodeGrid.GetLength(0) || neighborId[1] < 0 || neighborId[1] >= nodeGrid.GetLength(1))
                         continue;
 
-                    GridGraphNode neighbor = nodeGrid[neighborId[0], neighborId[1]];
+                    var neighbor = nodeGrid[neighborId[0], neighborId[1]];
 
                     if (neighbor != null)
                     {
                         if (checkCollisions)
                         {
-                            Vector3 direction = neighbor.transform.position - nodeGrid[r, c].transform.position;
+                            var direction = neighbor.transform.position - nodeGrid[r, c].transform.position;
                             if (Physics.Raycast(nodeGrid[r, c].transform.position, direction, direction.magnitude, LayerMask.GetMask("Obstacle")))
                                 continue;
                         }
@@ -132,10 +131,8 @@ public class GridGraph : MonoBehaviour
         if (nodes == null) return;
 
         // nodes
-        foreach (GridGraphNode node in nodes)
+        foreach (var node in nodes.Where(node => node != null))
         {
-            if (node == null) continue;
-
             Gizmos.color = node._nodeGizmoColor;
             Gizmos.DrawSphere(node.transform.position, _nodeGizmoRadius);
 

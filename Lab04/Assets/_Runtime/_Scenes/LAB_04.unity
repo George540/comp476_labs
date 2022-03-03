@@ -2520,15 +2520,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8530c4fbedc79a4e8a3501fcbf4495c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debug: 1
-  graph: {fileID: 519168784}
-  startNode: {fileID: 0}
-  goalNode: {fileID: 0}
-  openPointPrefab: {fileID: 1294200121035956867, guid: 68874d4a63745324e9cb221d8542328d,
+  _debug: 1
+  _graph: {fileID: 519168784}
+  _startNode: {fileID: 0}
+  _goalNode: {fileID: 0}
+  _openPointPrefab: {fileID: 1294200121035956867, guid: 68874d4a63745324e9cb221d8542328d,
     type: 3}
-  closedPointPrefab: {fileID: 1294200121035956867, guid: 8d40bc4eddb30a347bd4d3210e69a4a6,
+  _closedPointPrefab: {fileID: 1294200121035956867, guid: 8d40bc4eddb30a347bd4d3210e69a4a6,
     type: 3}
-  pathPointPrefab: {fileID: 1294200121035956867, guid: 9f5d6ee5b3ee14a4db973a5b755f42df,
+  _pathPointPrefab: {fileID: 1294200121035956867, guid: 9f5d6ee5b3ee14a4db973a5b755f42df,
     type: 3}
 --- !u!1 &575998043
 GameObject:

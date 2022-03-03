@@ -10,7 +10,7 @@ public class Pathfinding : MonoBehaviour
     public bool debug;
     [SerializeField] private GridGraph graph;
 
-    public delegate float Heuristic(Transform start, Transform end);
+    //public delegate float Heuristic(Transform start, Transform end);
 
     public GridGraphNode startNode;
     public GridGraphNode goalNode;
@@ -46,12 +46,13 @@ public class Pathfinding : MonoBehaviour
         }
     }
 
-    public List<GridGraphNode> FindPath(GridGraphNode start, GridGraphNode goal, Heuristic heuristic = null, bool isAdmissible = true)
+    public List<GridGraphNode> FindPath(GridGraphNode start, GridGraphNode goal, bool isAdmissible = true)
     {
         if (graph == null) return new List<GridGraphNode>();
 
         // if no heuristic is provided then set heuristic = 0
-        if (heuristic == null) heuristic = (Transform s, Transform e) => 0;
+        // if (heuristic == null) heuristic = (Transform s, Transform e) => 0;
+        
 
         List<GridGraphNode> path = null;
         bool solutionFound = false;
@@ -62,7 +63,7 @@ public class Pathfinding : MonoBehaviour
 
         // dictionary to keep track of f(n) values (movement cost + heuristic)
         Dictionary<GridGraphNode, float> fnDict = new Dictionary<GridGraphNode, float>();
-        fnDict.Add(start, heuristic(start.transform, goal.transform) + gnDict[start]);
+        fnDict.Add(start, Heuristic(start.transform, goal.transform) + gnDict[start]);
 
         // dictionary to keep track of our path (came_from)
         Dictionary<GridGraphNode, GridGraphNode> pathDict = new Dictionary<GridGraphNode, GridGraphNode>();
@@ -115,14 +116,15 @@ public class Pathfinding : MonoBehaviour
                 if (closedODict.Contains(n)) continue;
 
                 // find gNeighbor (g_next)
-                var g_next = gnDict[current];
+                var g_next = gnDict[current] + movement_cost;
 
                 // if needed: update tables, calculate fn, and update open_list using FakePQListInsert() function
-                // fn
                 if (!gnDict.ContainsKey(n) || g_next < gnDict[n])
                 {
+                    gnDict[n] = g_next;
+                    fnDict[n] = Heuristic(n.transform, goal.transform) + gnDict[n];
                     FakePQListInsert(openList, fnDict, n);
-                    pathDict.Add(n, current);
+                    pathDict[n] = current;
                 }
             }
         }
@@ -136,7 +138,7 @@ public class Pathfinding : MonoBehaviour
             // TODO
             // create the path by traversing the previous nodes in the pathDict
             // starting at the goal and finishing at the start
-            var current = (GridGraphNode) closedODict[goal];
+            var current = goal;
             path = new List<GridGraphNode>();
 
             while (current != start)
@@ -144,7 +146,8 @@ public class Pathfinding : MonoBehaviour
                 path = path.Append(current).ToList();
                 current = pathDict[current];
             }
-
+            path = path.Append(start).ToList();
+            
             // reverse the path since we started adding nodes from the goal 
             path.Reverse();
         }
@@ -239,5 +242,12 @@ public class Pathfinding : MonoBehaviour
                     pqList.Insert(0, node);
             }
         }
+    }
+
+    private float Heuristic(Transform node, Transform goal)
+    {
+        var nextPosition = node.position;
+        var goalPosition = goal.position;
+        return Mathf.Abs(nextPosition.x - goalPosition.x) - Mathf.Abs(nextPosition.z - goalPosition.z);
     }
 }

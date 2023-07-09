@@ -1,17 +1,22 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-using Photon.Pun;
-
-public class LobbyTopPanel : MonoBehaviour
+namespace Photon.Pun.Demo.Asteroids
 {
-    private readonly string connectionStatusMessage = "    Connection Status: ";
-
-    [Header("UI References")]
-    public Text ConnectionStatusText;
-
-    public void Update()
+    public class LobbyTopPanel : MonoBehaviour
     {
-        ConnectionStatusText.text = connectionStatusMessage + PhotonNetwork.NetworkClientState;
+        private readonly string connectionStatusMessage = "    Connection Status: ";
+
+        [Header("UI References")]
+        public Text ConnectionStatusText;
+
+        #region UNITY
+
+        public void Update()
+        {
+            ConnectionStatusText.text = connectionStatusMessage + PhotonNetwork.NetworkClientState;
+        }
+
+        #endregion
     }
 }
